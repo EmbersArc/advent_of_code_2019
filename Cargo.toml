@@ -36,6 +36,10 @@ path = "src/day7/main.rs"
 name = "day8"
 path = "src/day8/main.rs"
 
+[[bin]]
+name = "day9"
+path = "src/day9/main.rs"
+
 [dependencies]
 csv = "1.1"
 permutate = "0.3"

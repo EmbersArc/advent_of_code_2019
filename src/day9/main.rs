@@ -84,8 +84,25 @@ impl Program {
         digits
     }
 
+    fn fetch_input(&mut self, mode: i64, parameter: i64) -> i64 {
+        match mode {
+            0 => self.memory[parameter as usize],
+            1 => parameter,
+            2 => self.memory[(parameter + self.rel_base) as usize],
+            _ => panic!("Invalid parameter mode!"),
+        }
+    }
+    fn fetch_address(&mut self, mode: i64, parameter: i64) -> usize {
+        match mode {
+            0 => parameter as usize,
+            2 => (parameter + self.rel_base) as usize,
+            _ => panic!("Invalid parameter mode!"),
+        }
+    }
+
     fn from(memory: &Vec<i64>) -> Program {
         let mut new_memory = memory.clone();
+        // just *100 and hope for the best
         new_memory.resize(100 * new_memory.len(), 0);
         Program {
             initial_state: memory.clone(),
@@ -111,101 +128,77 @@ impl Program {
         self.rel_base = 0;
     }
     fn step(&mut self) -> i64 {
-        // references
-        let memory = &mut self.memory;
         loop {
             // parse instruction
-            let digits = Program::get_digits(memory[self.i]);
+            let digits = Program::get_digits(self.memory[self.i]);
             let opcode = 10 * digits[1] + digits[0];
             let mode_par1 = digits[2];
             let mode_par2 = digits[3];
-            let mode_par3 = digits[4]; // will never be immediate
-            if mode_par3 == 1 {
-                panic!("What");
-            }
+            let mode_par3 = digits[4];
 
             if opcode == 99 {
                 self.is_done = true;
                 return -1;
             }
 
+            // get parameters
+            let mut par1 = 0;
+            let mut par2 = 0;
+            let mut par3 = 0;
+            if self.memory.len() > self.i + 1 {
+                par1 = self.memory[self.i + 1];
+            }
+            if self.memory.len() > self.i + 2 {
+                par2 = self.memory[self.i + 2];
+            }
+            if self.memory.len() > self.i + 3 {
+                par3 = self.memory[self.i + 3];
+            }
+
             match opcode {
                 1 | 2 | 7 | 8 => {
-                    let input_1 = match mode_par1 {
-                        0 => memory[memory[self.i + 1] as usize],
-                        1 => memory[self.i + 1],
-                        2 => memory[(memory[self.i + 1] + self.rel_base) as usize],
-                        _ => panic!("Invalid parameter mode!"),
-                    };
-                    let input_2 = match mode_par2 {
-                        0 => memory[memory[self.i + 2] as usize],
-                        1 => memory[self.i + 2],
-                        2 => memory[(memory[self.i + 2] + self.rel_base) as usize],
-                        _ => panic!("Invalid parameter mode!"),
-                    };
-
-                    let to = match mode_par3 {
-                        0 => memory[self.i + 3] as usize,
-                        2 => (memory[self.i + 3] + self.rel_base) as usize,
-                        _ => panic!("Invalid parameter mode!"),
-                    };
+                    let input_1 = self.fetch_input(mode_par1, par1);
+                    let input_2 = self.fetch_input(mode_par2, par2);
+                    let input_3 = self.fetch_address(mode_par3, par3);
 
                     if opcode == 1 {
                         // add
-                        memory[to] = input_1 + input_2;
+                        self.memory[input_3] = input_1 + input_2;
                     } else if opcode == 2 {
                         // multiply
-                        memory[to] = input_1 * input_2;
+                        self.memory[input_3] = input_1 * input_2;
                     } else if opcode == 7 {
                         // less than
-                        memory[to] = (input_1 < input_2) as i64;
+                        self.memory[input_3] = (input_1 < input_2) as i64;
                     } else if opcode == 8 {
                         // equals
-                        memory[to] = (input_1 == input_2) as i64;
+                        self.memory[input_3] = (input_1 == input_2) as i64;
                     }
 
                     self.i += 4;
                 }
                 3 => {
                     // take input
-                    let to = match mode_par1 {
-                        0 => memory[self.i + 1] as usize,
-                        2 => (memory[self.i + 1] + self.rel_base) as usize,
-                        _ => panic!("Invalid parameter mode!"),
-                    };
+                    let input_1 = self.fetch_address(mode_par1, par1);
 
                     if self.i_input >= self.inputs.len() {
                         panic!("No more inputs available!");
                     }
-                    memory[to] = self.inputs[self.i_input];
+                    self.memory[input_1] = self.inputs[self.i_input];
                     self.i_input += 1;
                     self.i += 2;
                 }
                 4 => {
                     // output
-                    let output = match mode_par1 {
-                        0 => memory[memory[self.i + 1] as usize],
-                        1 => memory[self.i + 1],
-                        2 => memory[(memory[self.i + 1] + self.rel_base) as usize],
-                        _ => panic!("Invalid parameter mode!"),
-                    };
+                    let input_1 = self.fetch_input(mode_par1, par1);
 
                     self.i += 2;
-                    return output;
+                    return input_1;
                 }
                 5 | 6 => {
-                    let input_1 = match mode_par1 {
-                        0 => memory[memory[self.i + 1] as usize],
-                        1 => memory[self.i + 1],
-                        2 => memory[(memory[self.i + 1] + self.rel_base) as usize],
-                        _ => panic!("Invalid parameter mode!"),
-                    };
-                    let input_2 = match mode_par2 {
-                        0 => memory[memory[self.i + 2] as usize],
-                        1 => memory[self.i + 2],
-                        2 => memory[(memory[self.i + 2] + self.rel_base) as usize],
-                        _ => panic!("Invalid parameter mode!"),
-                    };
+                    let input_1 = self.fetch_input(mode_par1, par1);
+                    let input_2 = self.fetch_input(mode_par2, par2);
+
                     if opcode == 5 {
                         // jump if true
                         if input_1 != 0 {
@@ -224,14 +217,9 @@ impl Program {
                 }
                 9 => {
                     // change relative base
-                    let input = match mode_par1 {
-                        0 => memory[memory[self.i + 1] as usize],
-                        1 => memory[self.i + 1],
-                        2 => memory[(memory[self.i + 1] + self.rel_base) as usize],
-                        _ => panic!("Invalid parameter mode!"),
-                    };
+                    let input_1 = self.fetch_input(mode_par1, par1);
 
-                    self.rel_base += input;
+                    self.rel_base += input_1;
                     self.i += 2;
                 }
                 _ => panic!("Encountered invalid opcode '{}'!", opcode),
@@ -246,7 +234,7 @@ fn pt1() {
 
     // program.reset();
 
-    program.set_input(&vec![1]);
+    program.set_input(&vec![2]);
 
     while !program.is_done {
         output.push(program.step());

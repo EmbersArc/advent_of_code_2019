@@ -1,15 +1,12 @@
-use std::fs::File;
-use std::io::{BufReader, Read};
+use std::fs;
 
-fn get_input<R: Read>(io: R) -> Vec<u32> {
-    let mut br = BufReader::new(io);
-    let mut string: String = String::default();
-    let _result = br.read_to_string(&mut string);
-    string.chars().map(|c| c.to_digit(10).unwrap()).collect()
+fn get_input(filename : &str) -> Vec<u32> {
+    let contents = fs::read_to_string(filename).expect("Something went wrong reading the file");
+    contents.chars().map(|c| c.to_digit(10).unwrap()).collect()
 }
 
 fn pt1() {
-    let image_data = get_input(File::open("src/day8/input.txt").unwrap());
+    let image_data = get_input("src/day8/input.txt");
     let n_digits_layer = 25 * 6;
     let mut zeros_per_layer = Vec::new();
 
@@ -34,7 +31,7 @@ fn pt1() {
 }
 
 fn pt2() {
-    let image_data = get_input(File::open("src/day8/input.txt").unwrap());
+    let image_data = get_input("src/day8/input.txt");
     let n_digits_layer = 25 * 6;
 
     let mut final_image = image_data.chunks(n_digits_layer).last().unwrap().to_vec();

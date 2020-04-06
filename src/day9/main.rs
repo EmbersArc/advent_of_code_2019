@@ -1,9 +1,3 @@
-fn get_input_test() -> Vec<i64> {
-    vec![
-        109, 1, 204, -1, 1001, 100, 1, 100, 1008, 100, 16, 101, 1006, 101, 0, 99,
-    ]
-}
-
 fn get_input() -> Vec<i64> {
     vec![
         1102, 34463338, 34463338, 63, 1007, 63, 34463338, 63, 1005, 63, 53, 1102, 3, 1, 1000, 109,
@@ -232,7 +226,16 @@ fn pt1() {
     let mut program = Program::from(&get_input());
     let mut output = Vec::new();
 
-    // program.reset();
+    // Part 1
+    program.set_input(&vec![1]);
+    while !program.is_done {
+        output.push(program.step());
+    }
+    println!("Solution Part 1: {}", output[0]);
+
+    // Part 2
+    output.clear();
+    program.reset();
 
     program.set_input(&vec![2]);
 
@@ -240,7 +243,7 @@ fn pt1() {
         output.push(program.step());
     }
 
-    println!("Solution Part 1: {:?}", output);
+    println!("Solution Part 2: {}", output[0]);
 }
 
 fn main() {

@@ -1,15 +1,12 @@
-use std::fs::File;
-use std::io::{BufRead, BufReader, Error, ErrorKind, Read};
+use std::fs;
 
-fn read<R: Read>(io: R) -> Result<Vec<i64>, Error> {
-    let br = BufReader::new(io);
-    br.lines()
-        .map(|line| line.and_then(|v| v.parse().map_err(|e| Error::new(ErrorKind::InvalidData, e))))
-        .collect()
+fn read(filename: &str) -> Vec<i64> {
+    let contents = fs::read_to_string(filename).expect("Something went wrong reading the file");
+    contents.lines().map(|l| l.parse().unwrap()).collect()
 }
 
-fn pt1() -> Result<(), Error> {
-    let vec = read(File::open("src/day1/input.txt")?)?;
+fn pt1() {
+    let vec = read("src/day1/input.txt");
 
     let mut total_fuel = 0;
 
@@ -17,11 +14,10 @@ fn pt1() -> Result<(), Error> {
         total_fuel += module_mass / 3 - 2;
     }
     println!("Part 1: {}", total_fuel);
-    Ok(())
 }
 
-fn pt2() -> Result<(), Error> {
-    let vec = read(File::open("src/day1/input.txt")?)?;
+fn pt2() {
+    let vec = read("src/day1/input.txt");
 
     let mut total_fuel = 0;
 
@@ -37,16 +33,9 @@ fn pt2() -> Result<(), Error> {
         }
     }
     println!("Part 2: {}", total_fuel);
-    Ok(())
 }
 
-fn main() -> Result<(), Error> {
-    if let Err(e) = pt1() {
-        return Err(e);
-    }
-    if let Err(e) = pt2() {
-        return Err(e);
-    }
-
-    Ok(())
+fn main() {
+    pt1();
+    pt2();
 }

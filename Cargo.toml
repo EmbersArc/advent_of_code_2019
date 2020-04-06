@@ -41,5 +41,3 @@ name = "day9"
 path = "src/day9/main.rs"
 
 [dependencies]
-csv = "1.1"
-permutate = "0.3"

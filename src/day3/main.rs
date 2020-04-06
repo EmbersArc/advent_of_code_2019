@@ -72,12 +72,7 @@ fn get_line2() -> String {
 fn actions_to_path(actions: &String) -> Vec<Point> {
     let mut path: Vec<Point> = vec![Point { x: 0, y: 0 }];
 
-    let mut rdr = csv::ReaderBuilder::new()
-        .has_headers(false)
-        .from_reader(actions.as_bytes());
-
-    let result = rdr.records().nth(0).expect("a CSV record").unwrap();
-    for action in result.iter() {
+    for action in actions.split(",") {
         let length_str: String = action.chars().skip(1).take(action.len() - 1).collect();
         let length: i32 = length_str.parse().unwrap();
 

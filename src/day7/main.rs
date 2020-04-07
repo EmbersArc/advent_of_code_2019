@@ -169,49 +169,57 @@ fn get_digits(number: i32) -> Vec<i32> {
     digits
 }
 
-//** Heap's Algorithm to find permutations */
-fn get_permutations(elements: &Vec<i32>) -> Vec<Vec<i32>> {
-    let mut elements = elements.clone();
-    let n_elements = elements.len();
-    elements.sort();
-    let mut permutations: Vec<Vec<i32>> = vec![elements.clone()];
+struct Permutation {
+    elements: Vec<i32>,
+}
 
-    loop {
+impl Permutation {
+    fn from(elements: &Vec<i32>) -> Permutation {
+        let mut elements = elements.clone();
+        elements.sort();
+        Permutation { elements: elements }
+    }
+}
+
+impl Iterator for Permutation {
+    type Item = Vec<i32>;
+    //** Heap's Algorithm to find permutations */
+    fn next(&mut self) -> Option<Self::Item> {
         // Find the largest index k such that a[k] < a[k + 1]. If no such index exists, the permutation is the last permutation.
-        let mut k_greatest = n_elements;
-        for k in 0..n_elements - 1 {
-            if elements[k] < elements[k + 1] {
+        let mut k_greatest = self.elements.len();
+        for k in 0..self.elements.len() - 1 {
+            if self.elements[k] < self.elements[k + 1] {
                 k_greatest = k;
-            } else if k == n_elements - 2 && k_greatest == n_elements {
+            } else if k == self.elements.len() - 2 && k_greatest == self.elements.len() {
                 // does not exist
-                return permutations;
+                return None;
             }
         }
 
         // Find the largest index l greater than k such that a[k] < a[l].
-        let mut l_greatest = n_elements;
-        for l in 0..n_elements {
-            if elements[k_greatest] < elements[l] {
+        let mut l_greatest = self.elements.len();
+        for l in 0..self.elements.len() {
+            if self.elements[k_greatest] < self.elements[l] {
                 l_greatest = l;
             }
         }
 
         // Swap the value of a[k] with that of a[l].
-        elements.swap(k_greatest, l_greatest);
+        self.elements.swap(k_greatest, l_greatest);
 
         // Reverse the sequence from a[k + 1] up to and including the final element a[n].
-        elements[(k_greatest + 1)..].reverse();
+        self.elements[(k_greatest + 1)..].reverse();
 
-        permutations.push(elements.clone());
+        return Some(self.elements.clone());
     }
 }
 
 fn pt1() {
     let phase_settings = vec![0, 1, 2, 3, 4];
-    let permutations = get_permutations(&phase_settings);
+    let permutations = Permutation::from(&phase_settings);
     let mut current_best_power = 0;
 
-    for phase_setting in permutations.iter() {
+    for phase_setting in permutations {
         // A
         let mut program_a = Program::from(&get_input());
         program_a.set_input(&vec![phase_setting[0], 0]);
@@ -243,7 +251,7 @@ fn pt1() {
 
 fn pt2() {
     let phase_settings = vec![5, 6, 7, 8, 9];
-    let permutations = get_permutations(&phase_settings);
+    let permutations = Permutation::from(&phase_settings);
     let mut program_a = Program::from(&get_input());
     let mut program_b = Program::from(&get_input());
     let mut program_c = Program::from(&get_input());
@@ -252,7 +260,7 @@ fn pt2() {
 
     let mut max_power = 0;
 
-    for phase_setting in permutations.iter() {
+    for phase_setting in permutations {
         program_a.reset();
         program_b.reset();
         program_c.reset();

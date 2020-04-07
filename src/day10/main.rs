@@ -111,6 +111,7 @@ fn pt1() {
     for y in 0..height {
         for x in 0..width {
             map = get_input();
+
             erase_invisible(&mut map, (x, y));
 
             let mut visible_asteroids = 0;

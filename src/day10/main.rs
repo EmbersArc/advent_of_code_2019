@@ -1,49 +1,29 @@
 use std::f64::consts::PI;
 
 fn get_input() -> Vec<Vec<char>> {
-    //     let map = ".###..#......###..#...#
-    // #.#..#.##..###..#...#.#
-    // #.#.#.##.#..##.#.###.##
-    // .#..#...####.#.##..##..
-    // #.###.#.####.##.#######
-    // ..#######..##..##.#.###
-    // .##.#...##.##.####..###
-    // ....####.####.#########
-    // #.########.#...##.####.
-    // .#.#..#.#.#.#.##.###.##
-    // #..#.#..##...#..#.####.
-    // .###.#.#...###....###..
-    // ###..#.###..###.#.###.#
-    // ...###.##.#.##.#...#..#
-    // #......#.#.##..#...#.#.
-    // ###.##.#..##...#..#.#.#
-    // ###..###..##.##..##.###
-    // ###.###.####....######.
-    // .###.#####.#.#.#.#####.
-    // ##.#.###.###.##.##..##.
-    // ##.#..#..#..#.####.#.#.
-    // .#.#.#.##.##########..#
-    // #####.##......#.#.####.";
-    let map = ".#..##.###...#######
-##.############..##.
-.#.######.########.#
-.###.#######.####.#.
-#####.##.#.##.###.##
-..#####..#.#########
-####################
-#.####....###.#.#.##
-##.#################
-#####.##.###..####..
-..######..##.#######
-####.##.####...##..#
-.#####..#.######.###
-##...#.##########...
-#.##########.#######
-.####.#.###.###.#.##
-....##.##.###..#####
-.#.#.###########.###
-#.#.#.#####.####.###
-###.##.####.##.#..##";
+    let map = ".###..#......###..#...#
+#.#..#.##..###..#...#.#
+#.#.#.##.#..##.#.###.##
+.#..#...####.#.##..##..
+#.###.#.####.##.#######
+..#######..##..##.#.###
+.##.#...##.##.####..###
+....####.####.#########
+#.########.#...##.####.
+.#.#..#.#.#.#.##.###.##
+#..#.#..##...#..#.####.
+.###.#.#...###....###..
+###..#.###..###.#.###.#
+...###.##.#.##.#...#..#
+#......#.#.##..#...#.#.
+###.##.#..##...#..#.#.#
+###..###..##.##..##.###
+###.###.####....######.
+.###.#####.#.#.#.#####.
+##.#.###.###.##.##..##.
+##.#..#..#..#.####.#.#.
+.#.#.#.##.##########..#
+#####.##......#.#.####.";
 
     let char_map = map.lines().map(|l| l.chars().collect()).collect();
 
@@ -118,7 +98,7 @@ fn gcd(mut a: i32, mut b: i32) -> i32 {
     a.abs()
 }
 
-fn pt1() {
+fn pt1() -> (i32, i32) {
     // o-> x
     // |
     // v
@@ -129,7 +109,7 @@ fn pt1() {
     let height = map.len() as i32;
 
     let mut max_visible = 0;
-    let mut best_location = (0, 0);
+    let mut best_location = (-1, -1);
 
     for y in 0..height {
         for x in 0..width {
@@ -143,7 +123,7 @@ fn pt1() {
             }
             visible_asteroids -= 1;
 
-            if visible_asteroids > max_visible {
+            if visible_asteroids >= max_visible {
                 max_visible = visible_asteroids;
                 best_location = (x, y);
             }
@@ -151,9 +131,11 @@ fn pt1() {
     }
 
     println!("Solution Part 1: {:?}: {}", best_location, max_visible);
+
+    best_location
 }
 
-fn pt2() {
+fn pt2(best_location: (i32, i32)) {
     // o-> x
     // |
     // v
@@ -163,7 +145,7 @@ fn pt2() {
     let width = map[0].len() as i32;
     let height = map.len() as i32;
     let mut asteroid_info = Vec::new(); // coordinates, distance and angle
-    let tracker_pos = (11, 13);
+    let tracker_pos = best_location;
 
     for y in 0..height {
         for x in 0..width {
@@ -181,40 +163,40 @@ fn pt2() {
         }
     }
 
-    // use std::cmp::Ordering;
-    // fn compare_info(info1: &((i32, i32), f64, f64), info2: &((i32, i32), f64, f64)) -> Ordering {
-    //     if info1.2 == info2.2 {
-    //         // same angle
-    //         if info1.1 < info2.1 {
-    //             // smaller distance goes first
-    //             return Ordering::Less;
-    //         } else {
-    //             return Ordering::Greater;
-    //         }
-    //     } else if info1.2 < info2.2 {
-    //         // smaller angle goes first
-    //         return Ordering::Less;
-    //     } else {
-    //         return Ordering::Greater;
-    //     }
-    // }
-    asteroid_info.sort_by(&compare_info);
+    asteroid_info.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap()); // distance ascending
+    asteroid_info.sort_by(|a, b| a.2.partial_cmp(&b.2).unwrap()); // angle ascending
 
-    // asteroid_info.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap()); // by distance ascending
-    // asteroid_info.sort_by(|a, b| a.2.partial_cmp(&b.2).unwrap()); // by angle ascending
+    let mut destroyed = vec![false; asteroid_info.len()];
+    let mut destroyed_indices = Vec::new();
 
-    println!("{:?}", asteroid_info);
-    println!("Solution Part 2: {:?}", asteroid_info[199]);
-    println!("{:?}", asteroid_info.iter().position(|i| i.0 == (8, 2)));
+    let mut angle;
+    let mut i = 0;
+    // do rounds
+    loop {
+        // destroy one
+        destroyed[i] = true;
+        destroyed_indices.push(i);
+        angle = asteroid_info[i].2;
+
+        // skip while angle is the same or already destroyed
+        while i < asteroid_info.len() && (angle == asteroid_info[i].2 || destroyed[i]) {
+            i += 1;
+        }
+
+        // find the one with the lowest angle
+        if i == asteroid_info.len() {
+            match destroyed.iter().position(|&b| b == false) {
+                Some(p) => i = p,
+                None => break,
+            }
+        }
+    }
+
+    let coordinates = asteroid_info[destroyed_indices[199]].0;
+    println!("Solution Part 2: {}", coordinates.0 * 100 + coordinates.1,);
 }
 
-// fn print_map(map: &Vec<Vec<char>>) {
-//     for line in map.iter() {
-//         let string: String = line.into_iter().collect();
-//         println!("{}", string);
-//     }
-// }
-
+// atan2 function in [0; 2PI]
 fn catan2(x: f64, y: f64) -> f64 {
     if x < 0. {
         2. * PI + x.atan2(y)
@@ -224,6 +206,6 @@ fn catan2(x: f64, y: f64) -> f64 {
 }
 
 fn main() {
-    pt1();
-    pt2();
+    let best_location = pt1();
+    pt2(best_location);
 }
